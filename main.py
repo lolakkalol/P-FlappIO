@@ -78,7 +78,7 @@ pygame.display.set_icon(sBirdIcon)
 bg = background(0, 0, 10, sBackground, screen)
 brd = bird(1, 5, sBird, screen)
 
-pipes = [pipe(0, 300, 10, sPipe, screen), pipe(800/2, 300, 10, sPipe, screen), pipe(800, 300, 10, sPipe, screen)]
+pipes = [pipe(860/3, 300, 10, sPipe, screen), pipe(2*860/3, 300, 10, sPipe, screen), pipe(860, 300, 10, sPipe, screen)]
 
 def colission():
     pass
@@ -103,10 +103,8 @@ def gameLoop():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_d:
+                if event.key == pygame.K_SPACE:
                     brd.jump()
-                elif event.key == pygame.K_a:
-                    tmp -= 1
 
         bg.update()
         brd.update()
