@@ -27,16 +27,22 @@ class bird:
     speed = 0
     acceleration = 0
     maxSpeed = 0
+    dead = False
 
     def __init__(self, acceleration, maxSpeed, sBird, screen):
             self.acceleration = acceleration
             self.maxSpeed     = maxSpeed
 
     def update(self):
-        if self.speed < self.maxSpeed:
-            self.speed += self.acceleration
+        if self.dead == False:
 
-        self.y     += self.speed
+            if self.speed < self.maxSpeed:
+                self.speed += self.acceleration
+
+            self.y += self.speed
+
+        elif self.x > -51:
+            self.x -= 10
 
         screen.blit(sBird, (self.x, self.y))
 
@@ -75,15 +81,26 @@ sBirdIcon = pygame.image.load("./images/birdicon.png")
 
 pygame.display.set_icon(sBirdIcon)
 
-bg = background(0, 0, 10, sBackground, screen)
-brd = bird(1, 5, sBird, screen)
+def collission(pipe, bird):
+    if bird.y >= 500-36:
+        bird.dead = True
 
-pipes = [pipe(860/3, 300, 10, sPipe, screen), pipe(2*860/3, 300, 10, sPipe, screen), pipe(860, 300, 10, sPipe, screen)]
+    if ( bird.y + 36 > pipe.y + (pipe.gap/2) ) and ((bird.x > pipe.x) and (bird.x < pipe.x + 60)):
+        bird.dead = True
 
-def colission():
-    pass
+    if ( bird.y < pipe.y - (pipe.gap/2) ) and ( (bird.x > pipe.x) and (bird.x < pipe.x + 60) ):
+        bird.dead = True
 
-def movePipes():
+    #if ( bird.y <pipe.y + (pipe.gap/2) ) and
+
+
+
+
+    pygame.draw.circle(screen, (255,0,0), (bird.x, bird.y), 5)
+    pygame.draw.circle(screen, (255,0,0), (int(pipe.x), int(pipe.y - (pipe.gap/2))), 5)
+
+
+def movePipes(pipes, closestPipe):
 
     for pip in pipes:
         pip.move()
@@ -92,7 +109,19 @@ def movePipes():
         if pip.x < -60:
             pip.x = 800
 
+            if closestPipe[0] < 2:
+                closestPipe[0] += 1
+            else:
+                closestPipe[0] = 0
+
 def gameLoop():
+
+    bg = background(0, 0, 5, sBackground, screen)
+    brd = bird(1, 5, sBird, screen)
+
+    closestPipe = [1] #Just to make it mutable
+    closestPipe[0] = 0
+    pipes = [pipe(860/3, 300, 10, sPipe, screen), pipe(2*860/3, 300, 10, sPipe, screen), pipe(860, 300, 10, sPipe, screen)]
 
     running = True
     while running:
@@ -107,13 +136,13 @@ def gameLoop():
                     brd.jump()
 
         bg.update()
+        movePipes(pipes, closestPipe)
+        collission(pipes[ closestPipe[0] ], brd)
         brd.update()
-        movePipes()
+        print(closestPipe[0])
 
-        #print(pygame.key)
-
-        #print(clock)
-        clock.tick(60)
+        clock.tick(0)
+        print(clock)
         pygame.display.update()
 
 gameLoop()
