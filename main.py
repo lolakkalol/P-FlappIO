@@ -1,128 +1,158 @@
 import pygame
 
 class background:
-    x = 0
-    y = 0
-    speed = 0
+    speed  = 10
+    x, y   = 0, 0
+    screen = None
+    sprite = None
 
-    def __init__(self, x, y, speed, sBackground, screen):
-        self.x     = x
-        self.y     = y
-        self.speed = speed
+    def __init__(self, position, speed, sprite, screen):
+        self.x, self.y = position
+        self.speed     = speed
+        self.sprite    = sprite
+        self.screen    = screen
 
     def update(self):
-        x = self.x
 
-        screen.blit(sBackground, (0   - self.x, 0))
-        screen.blit(sBackground, (410 - self.x, 0))
-        screen.blit(sBackground, (820 - self.x, 0))
+        # 0, 410 and 820 is offsets to get the sprite to line up properly
+        self.screen.blit(self.sprite, (0   + self.x, 0))
+        self.screen.blit(self.sprite, (410 + self.x, 0))
+        self.screen.blit(self.sprite, (820 + self.x, 0))
 
-        if x >= 410:
+        if self.x <= -410: # Will check if the visible segment of the sprite is visible
             self.x = 0
-        self.x += self.speed
+
+        # Moves the sprites to the left
+        self.x -= self.speed
 
 class bird:
-    x = 100
-    y = 0
-    speed = 0
-    acceleration = 0
-    maxSpeed = 0
+    x, y = 0, 0
     dead = False
 
-    def __init__(self, acceleration, maxSpeed, sBird, screen):
-            self.acceleration = acceleration
-            self.maxSpeed     = maxSpeed
+    acceleration = 0
+    speed        = 0
+    maxFallSpeed = 0
+
+    screen = None
+    sprite = None
+
+    def __init__(self, position, maxFallSpeed, acceleration, sprite, screen):
+        self.x, self.y    = position
+        self.maxFallSpeed = maxFallSpeed
+        self.acceleration = acceleration
+        self.sprite       = sprite
+        self.screen       = screen
 
     def update(self):
         if self.dead == False:
 
-            if self.speed < self.maxSpeed:
+            if self.speed < self.maxFallSpeed:
                 self.speed += self.acceleration
 
             self.y += self.speed
 
         elif self.x > -51:
-            self.x -= 10
+            self.x -= 10 # Need to be the speed of the pipes
 
-        screen.blit(sBird, (self.x, self.y))
+        self.screen.blit(self.sprite, (self.x, self.y)) # Prints bird to screen
 
     def jump(self):
         self.speed = -15
 
 class pipe:
-    pipeSpeed = 10
-    x = 0
-    y = 0
-    gap = 100
+    speed  = 0
+    x, y   = 0, 0
+    gap    = 200
+    screen = None
+    sprite = None
 
-    def __init__(self, x, y, pipeSpeed, sPipe, screen):
-        self.x         = x
-        self.y         = y
-        self.pipeSpeed = pipeSpeed
+    def __init__(self, position, speed, sprite, screen):
+        self.x, self.y = position
+        self.speed     = speed
+        self.sprite    = sprite
+        self.screen    = screen
 
     def show(self):
-        screen.blit(sPipe, (self.x, self.y + (self.gap/2)))
-        screen.blit( pygame.transform.rotate(sPipe, 180) , (self.x, self.y-400 - (self.gap/2)) )
+        self.screen.blit( self.sprite, (self.x, self.y + (self.gap/2)) )                                     # Shows the bottom pipe
+        self.screen.blit( pygame.transform.rotate( self.sprite, 180 ), (self.x, self.y-400 - (self.gap/2)) ) # Shows the top pipe
 
     def move(self):
-        self.x -= self.pipeSpeed
+        self.x -= self.speed
+
+# --------------------------------------------- END OF CLASSES ------------------------------------------------------
 
 pygame.init()
 
-screen = pygame.display.set_mode((800, 600))
-pygame.display.set_caption("FlappIO")
-clock = pygame.time.Clock()
-events = pygame.event.get()
-
-sBackground = pygame.image.load("./images/background.png")
-sBird = pygame.image.load("./images/bird.png")
-sPipe = pygame.image.load("./images/pipe.png")
-sBirdIcon = pygame.image.load("./images/birdicon.png")
-
-pygame.display.set_icon(sBirdIcon)
-
 def collission(pipe, bird):
+
+    # Checks if the bird hit the ground
     if bird.y >= 500-36:
         bird.dead = True
 
+    # Checks if birds bottom left corner hit the bottom pipe
     if ( bird.y + 36 > pipe.y + (pipe.gap/2) ) and ((bird.x > pipe.x) and (bird.x < pipe.x + 60)):
         bird.dead = True
 
+    # Checks if birds top left corner hit the bottom pipe
     if ( bird.y < pipe.y - (pipe.gap/2) ) and ( (bird.x > pipe.x) and (bird.x < pipe.x + 60) ):
         bird.dead = True
 
-    #if ( bird.y <pipe.y + (pipe.gap/2) ) and
+    # Checks if birds top right corner hit the bottom pipe
+    if ( bird.y < pipe.y - (pipe.gap/2) ) and ( ((bird.x + 51 > pipe.x) and (bird.x + 51 < pipe.x + 60)) ):
+        bird.dead = True
 
-
-
-
-    pygame.draw.circle(screen, (255,0,0), (bird.x, bird.y), 5)
-    pygame.draw.circle(screen, (255,0,0), (int(pipe.x), int(pipe.y - (pipe.gap/2))), 5)
-
+    # Checks if birds bottom right corner hit the bottom pipe
+    if ( bird.y + 36 > pipe.y + (pipe.gap/2) ) and ((bird.x + 51 > pipe.x) and (bird.x + 51 < pipe.x + 60)):
+        bird.dead = True
 
 def movePipes(pipes, closestPipe):
 
-    for pip in pipes:
-        pip.move()
-        pip.show()
+    for pipe in pipes:
+        pipe.move()
+        pipe.show()
 
-        if pip.x < -60:
-            pip.x = 800
+        if pipe.x < -60:
+            pipe.x = 800
 
             if closestPipe[0] < 2:
                 closestPipe[0] += 1
             else:
                 closestPipe[0] = 0
 
-def gameLoop():
+def main():
 
-    bg = background(0, 0, 5, sBackground, screen)
-    brd = bird(1, 5, sBird, screen)
+    # Window settings
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("FlappIO")
 
-    closestPipe = [1] #Just to make it mutable
+    sBirdIcon = pygame.image.load("./images/birdicon.png")
+    pygame.display.set_icon(sBirdIcon)
+    # ----------------
+
+    # Sprites
+    sPipe = pygame.image.load("./images/pipe.png")
+    sBird = pygame.image.load("./images/bird.png")
+    sBackground = pygame.image.load("./images/background.png")
+    # -------
+
+    # Misc.
+    clock = pygame.time.Clock()
+    events = pygame.event.get()
+    # -----
+
+    # Temporary lines to be change
+    bg = background((0, 0), 10, sBackground, screen)
+    brd = bird((20, 250), 10, 1, sBird, screen)
+
+    closestPipe = [1] # Creates a list so that the number is mutable
     closestPipe[0] = 0
-    pipes = [pipe(860/3, 300, 10, sPipe, screen), pipe(2*860/3, 300, 10, sPipe, screen), pipe(860, 300, 10, sPipe, screen)]
+    pipeSpeed = 5
+    pipes = [ pipe( (860/3, 300), pipeSpeed, sPipe, screen ),
+              pipe( (2*860/3, 300), pipeSpeed, sPipe, screen ),
+              pipe( (860, 300), pipeSpeed, sPipe, screen )]
+    # ------------------------
 
+    # Game/window loop
     running = True
     while running:
 
@@ -131,18 +161,18 @@ def gameLoop():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     brd.jump()
 
-        bg.update()
-        movePipes(pipes, closestPipe)
-        collission(pipes[ closestPipe[0] ], brd)
-        brd.update()
-        print(closestPipe[0])
+        bg.update()                               # Updates background
+        movePipes(pipes, closestPipe)             # Moves the pipes
+        collission(pipes[ closestPipe[0] ], brd)  # Checks for collission between bird and the closest pipe
+        brd.update()                              # Updates the birds posistion
 
-        clock.tick(0)
-        print(clock)
-        pygame.display.update()
+        clock.tick(30)          # Sets the frame rate
+        pygame.display.update() # Updates the window
 
-gameLoop()
+if __name__ == "__main__":
+    main()
